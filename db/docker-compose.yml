@@ -1,16 +1,33 @@
+version: '3.8'
+
 services:
   db:
-    image: postgis/postgis:15-3.3
+    build: 
+      context: .
+      network: host
+      dockerfile: Dockerfile
     container_name: map_spatial_db
+    restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: map_ai
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=map_ai
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Denna volym mappar din init.sql så att tabellen skapas automatiskt
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - map_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d map_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+networks:
+  map_network:
+    driver: bridge
 volumes:
   postgres_data:

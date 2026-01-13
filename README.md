@@ -32,6 +32,7 @@ cp example.env .env
 | Variable | Description |
 | --- | --- |
 | `GEMINI_API_KEY` | API key for Gemini |
+| `HF_TOKEN` | API key for Huggingface |
 | `NEXT_PUBLIC_MAPS_API_KEY` | API key for Google Maps |
 | `DATABASE_URL` | PostgreSQL connection string |
 
