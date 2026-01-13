@@ -11,15 +11,29 @@ const DefaultIcon = L.icon({
   iconAnchor: [12, 41]
 });
 
+function MapRecenter({ points }: { points: any[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (points && points.length > 0) {
+      const firstPoint = points[0].pos.coordinates;
+      map.setView([firstPoint[1], firstPoint[0]], 5, { animate: true });
+    }
+  }, [points, map]);
+  return null;
+}
+
 function HeatmapLayer({ points }: { points: any[] }) {
   const map = useMap();
   useEffect(() => {
     if (!points || points.length === 0) return;
-    const heatData = points.map(p => {
-      const coords = p.pos.match(/-?\d+\.\d+/g);
-      return [parseFloat(coords[1]), parseFloat(coords[0]), 0.5];
-    });
-    const heatLayer = (L as any).heatLayer(heatData, { radius: 20, blur: 15 }).addTo(map);
+    
+    const heatData = points.map(p => [
+      p.pos.coordinates[1], // lat
+      p.pos.coordinates[0], // long
+      p.similarity || 0.5  
+    ]);
+
+    const heatLayer = (L as any).heatLayer(heatData, { radius: 25, blur: 15 }).addTo(map);
     return () => { map.removeLayer(heatLayer); };
   }, [points, map]);
   return null;
@@ -34,14 +48,19 @@ export default function Map({ points, onPointClick }: { points: any[], onPointCl
       dragging={true}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      
+      <MapRecenter points={points} />
+      
       <HeatmapLayer points={points} />
+
       {points.map((p, i) => {
-        const coords = p.pos.match(/-?\d+\.\d+/g);
-        const lat = parseFloat(coords[1]);
-        const lon = parseFloat(coords[0]);
+        // GeoJSON: [lon, lat]
+        const lon = p.pos.coordinates[0];
+        const lat = p.pos.coordinates[1];
+        
         return (
           <Marker 
-            key={i} 
+            key={`${i}-${lat}-${lon}`} 
             position={[lat, lon]} 
             icon={DefaultIcon}
             eventHandlers={{ click: () => onPointClick(lat, lon) }}
